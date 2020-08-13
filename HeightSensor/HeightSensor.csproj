@@ -43,8 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ControlProgram.cs" />
-    <Compile Include="DataTransmissionProgram.cs" />
+    <Compile Include="ByteEnum.cs" />
     <Compile Include="OD5000Controller.cs" />
     <Compile Include="IController.cs" />
     <Compile Include="IHeightSensorController.cs" />

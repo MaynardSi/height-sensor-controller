@@ -9,5 +9,6 @@ namespace HeightSensor
     public interface IHeightSensorController : IController
     {
         //TODO: move concrete controller fields to interface
+        
     }
 }
