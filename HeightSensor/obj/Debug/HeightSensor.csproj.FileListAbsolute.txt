@@ -1,0 +1,7 @@
+C:\Users\User\Documents\GitHub\HeightSensor\obj\Debug\HeightSensor.csprojAssemblyReference.cache
+C:\Users\User\Documents\GitHub\HeightSensor\obj\Debug\HeightSensor.csproj.CoreCompileInputs.cache
+C:\Users\User\Documents\GitHub\HeightSensor\bin\Debug\HeightSensor.exe.config
+C:\Users\User\Documents\GitHub\HeightSensor\bin\Debug\HeightSensor.exe
+C:\Users\User\Documents\GitHub\HeightSensor\bin\Debug\HeightSensor.pdb
+C:\Users\User\Documents\GitHub\HeightSensor\obj\Debug\HeightSensor.exe
+C:\Users\User\Documents\GitHub\HeightSensor\obj\Debug\HeightSensor.pdb

@@ -1,27 +1,22 @@
-﻿using System;
-using System.Diagnostics;
-using System.Linq;
+﻿using HeightSensor.Utils;
+using HeightSensor.Enums;
+using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
+using System.Text;
+using System.Net.Http.Headers;
+using System.Linq;
 
 namespace HeightSensor
 {
     public class OD5000Controller : IHeightSensorController
     {
-        /// <summary>
-        /// UDP client responsible for sending commands to a
-        /// given port. Commands for reading and writing are
-        /// transmitted to port 5011 (default) via the UDP.
-        /// </summary>
-        public UdpClient DataTransmissionClient { get; set; }
-
-        /// <summary>
-        /// IP address and port destination for receiving
-        /// continuous data.
-        /// Default IP for receiving process data: 192.168.0.200
-        /// Default Por for receving process data: 5010
-        /// </summary>
-        public IPEndPoint DataTransmissionEndPoint { get; set; }
+        // TODO: What about Device IP and 
+        public OD5000Controller(string IPAddress, )
+        {
+            
+        }
 
         /// <summary>
         /// UDP client that listens for traffic on a given
@@ -38,23 +33,99 @@ namespace HeightSensor
         /// Default Port: 5011
         /// </summary>
         public IPEndPoint ControlEndPoint { get; set; }
+        /// <summary>
+        /// UDP client responsible for sending commands to a
+        /// given port. Commands for reading and writing are
+        /// transmitted to port 5011 (default) via the UDP.
+        /// </summary>
+        public UdpClient DataTransmissionClient { get; set; }
+
+        /// <summary>
+        /// IP address and port destination for receiving
+        /// continuous data.
+        /// </summary>
+        public IPEndPoint DataTransmissionEndPoint { get; set; }
+        public StringBuilder DataTransmissionLog { get; set; }
+        public bool IsTransmitting { get; set; }
+
+        /// <summary>
+        /// UDP client responsible for receiving data packets
+        /// of saved measurement data/recording.
+        /// </summary>
+        public UdpClient StorageDataReadingClient { get; set; }
+
+        /// <summary>
+        /// IP address and port destination for receiving saved
+        /// measurement/recording data packets.
+        /// </summary>
+        public IPEndPoint StorageDataReadingEndPoint { get; set; }
+
+        public IPAddress DeviceIPAddress { get; set; }
+        public IPAddress HostIPAddress { get; set; }
+
+        /// <summary>
+        /// Throws an exception if bytes received contain a command error, 
+        /// address error, or overflow error.
+        /// </summary>
+        /// <param name="receivedBytes">The bytes received.</param>
+        /// <returns></returns>
+        public bool IsDeviceResponseValid(byte[] receivedBytes)
+        {
+            if (ByteUtils.ByteArrayContains(receivedBytes, ByteResponseEnum.COMMAND_ERROR))
+            {
+                throw new Exception(); // TODO: Throw command error exception
+            }
+            if (ByteUtils.ByteArrayContains(receivedBytes, ByteResponseEnum.ADDRESS_ERROR))
+            {
+                throw new Exception(); // TODO: Throw address error exception
+            }
+            if (ByteUtils.ByteArrayContains(receivedBytes, ByteResponseEnum.OVERFLOW_ERROR))
+            {
+                throw new Exception(); // TODO: Throw overflow error exception
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Sends the command at the designated Control EndPoint.
+        /// Receives a response from the device at the same EndPoint when possible.
+        /// </summary>
+        /// <param name="command">The command to send.</param>
+        public void SendCommand(byte[] command)
+        {
+            try
+            {
+                ControlClient.Send(command, command.Length);
+                IPEndPoint RemoteIpEndPoint = new IPEndPoint(IPAddress.Any, 0);     // TODO: Maybe change to read to defined source
+                byte[] receivedBytes = ControlClient.Receive(ref RemoteIpEndPoint); // Maybe add timeout here (await/async)
+                IsDeviceResponseValid(receivedBytes);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
 
         #region Controller Interface Methods
         public bool Startup()
         {
             try
             {
-                // TODO: Reevaluate. Connect call since UDP is a connectionless protocol.
-                // You can specify the destination address when you call Send.
-                DataTransmissionClient.Connect(DataTransmissionEndPoint);
-                // TODO: Maybe consider only starting up
+                ControlClient = new UdpClient();
+                DataTransmissionClient = new UdpClient();
+                StorageDataReadingClient = new UdpClient();
+
+                DataTransmissionListener(DataTransmissionClient);
+                StorageDataReadingListener(StorageDataReadingClient);
+
                 ControlClient.Connect(ControlEndPoint);
+                DataTransmissionClient.Connect(DataTransmissionEndPoint);
+                StorageDataReadingClient.Connect(StorageDataReadingEndPoint);
                 return true;
             }
             catch (Exception)
             {
                 return false;
-                //throw;
             }
         }
 
@@ -62,8 +133,11 @@ namespace HeightSensor
         {
             try
             {
-                DataTransmissionClient.Close();
                 ControlClient.Close();
+                DataTransmissionClient.Close();
+                StorageDataReadingClient.Close();
+                // TODO: Add task cancellation
+
                 return true;
             }
             catch (Exception)
@@ -88,63 +162,63 @@ namespace HeightSensor
         #endregion
 
         #region Height Sensor Interface Methods
-        public int ReadHeight()
-        {
-            try
-            {
-                ControlClient.Send(ByteCommandEnum.SINGLE_MEASURE, ByteCommandEnum.SINGLE_MEASURE.Length);
-                //IPEndPoint object will allow us to read datagrams sent from any source.
-                IPEndPoint RemoteIpEndPoint = new IPEndPoint(IPAddress.Any, 0);
 
-                // Blocks until a message returns on this socket from a remote host.
-                byte[] receivedBytes = ControlClient.Receive(ref RemoteIpEndPoint);
-                if (receivedBytes.SequenceEqual(ByteResponseEnum.COMMAND_ERROR))
-                {
-                    throw new Exception();
-                }
-                if (receivedBytes.SequenceEqual(ByteResponseEnum.ADDRESS_ERROR))
-                {
-                    throw new Exception();
-                }
-                if (receivedBytes.SequenceEqual(ByteResponseEnum.OVERFLOW_ERROR))
-                {
-                    throw new Exception();
-                }
-                #region Test
-                Debug.WriteLine("This is the message you received " +
-                                             BitConverter.ToString(receivedBytes));
-                Debug.WriteLine("This message was sent from " +
-                                            RemoteIpEndPoint.Address.ToString() +
-                                            " on their port number " +
-                                            RemoteIpEndPoint.Port.ToString());
-                #endregion
-                return BitConverter.ToInt32(receivedBytes, 1); //maybe 2
-            }
-            catch (Exception)
+        /// <summary>
+        /// Retruns the sensor's measured value in milimeters.
+        /// </summary>
+        public void ReadHeight()
+        {
+            SendCommand(ByteCommandEnum.SingleMeasure);
+        }
+
+        #region Data Transmission
+        public void StartDataTransmission()
+        {
+            Task.Run(startDataTransmission);
+            SendCommand(ByteCommandEnum.SetDataPushOn);
+
+            void startDataTransmission()
             {
-                // Robot must catch this exception.
-                throw;
+                DataTransmissionLog = new StringBuilder();
+                IPEndPoint ep = DataTransmissionEndPoint;
+                while (IsTransmitting)
+                {
+                    byte[] receivedBytes = DataTransmissionClient.Receive(ref ep);
+                    DataTransmissionLog.Append();
+                }
             }
         }
-
-        public bool StartBufferRecord()
+        public void StopDataTransmission()
         {
-            throw new NotImplementedException();
-        }
-        public bool StopBufferRecord()
-        {
-            throw new NotImplementedException();
+            SendCommand(ByteCommandEnum.SetDataPushOff);
+            IsTransmitting = false;
         }
 
-        public bool StartMeasure()
+        public void SetDataTransmissionIP(string ipAddressString)
+        {
+            byte[] Command = ByteUtils.ConcatByteArray(ByteCommandEnum.SetDataPushIP,
+                IPAddress.Parse(ipAddressString).GetAddressBytes());
+            SendCommand(Command);
+        }
+        #endregion
+        #region Storage Data Reading
+        public void StartStorageDataReading()
         {
             throw new NotImplementedException();
         }
 
-        public bool StopMeasure()
+        public void StopStorageDataReading()
         {
             throw new NotImplementedException();
         }
+
+        public void SetStorageDataReadingIP(string ipAddressString)
+        {
+            byte[] Command = ByteUtils.ConcatByteArray(ByteCommandEnum.SetRecordingIP,
+                IPAddress.Parse(ipAddressString).GetAddressBytes());
+            SendCommand(Command);
+        }
+        #endregion
         #endregion
     }
 }

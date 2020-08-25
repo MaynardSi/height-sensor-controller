@@ -4,10 +4,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{492D14B5-C619-4AE8-87FD-D2F0E3395CA0}</ProjectGuid>
+    <ProjectGuid>{D49700D7-2DA3-4EE4-B67A-C97809ACF142}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>HeightSensor</RootNamespace>
-    <AssemblyName>HeightSensor</AssemblyName>
+    <RootNamespace>DataTransmissionProgram</RootNamespace>
+    <AssemblyName>DataTransmissionProgram</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -33,6 +33,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Corex.Core">
+      <HintPath>..\..\CorexLib\Corex.Core.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -43,14 +46,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Enums\ByteEnum.cs" />
-    <Compile Include="Enums\ResponseDestinationEnum.cs" />
-    <Compile Include="OD5000Controller.cs" />
-    <Compile Include="IController.cs" />
-    <Compile Include="IHeightSensorController.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="DataTransmissionProgram.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Utils\ByteUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

@@ -1,0 +1,6 @@
+C:\Users\User\Documents\GitHub\HeightSensor\StorageDataReadingClient\bin\Debug\StorageDataReadingClient.exe.config
+C:\Users\User\Documents\GitHub\HeightSensor\StorageDataReadingClient\bin\Debug\StorageDataReadingClient.exe
+C:\Users\User\Documents\GitHub\HeightSensor\StorageDataReadingClient\bin\Debug\StorageDataReadingClient.pdb
+C:\Users\User\Documents\GitHub\HeightSensor\StorageDataReadingClient\obj\Debug\StorageDataReadingClient.csproj.CoreCompileInputs.cache
+C:\Users\User\Documents\GitHub\HeightSensor\StorageDataReadingClient\obj\Debug\StorageDataReadingClient.exe
+C:\Users\User\Documents\GitHub\HeightSensor\StorageDataReadingClient\obj\Debug\StorageDataReadingClient.pdb
